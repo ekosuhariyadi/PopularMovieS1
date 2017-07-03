@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Popular Movies Stage 1</string>
+    <string name="shared_image" translatable="false">sharedimage</string>
+
+    <string name="movie_details_rating">Average rating: %1$f</string>
+    <string name="popular">Popular</string>
+    <string name="top_rated">Top Rated</string>
+</resources>
