@@ -27,8 +27,8 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
  * Created by eko on 7/2/17.
  */
 
-@Module
-public class NetworkModule {
+@Module(includes = ViewModelModule.class)
+class NetworkModule {
 
     private final static String MOVIEDB_API_KEY = BuildConfig.MOVIEDB_API_KEY;
 

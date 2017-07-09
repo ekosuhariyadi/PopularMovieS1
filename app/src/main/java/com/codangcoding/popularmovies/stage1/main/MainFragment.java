@@ -1,23 +1,25 @@
 package com.codangcoding.popularmovies.stage1.main;
 
 import android.arch.lifecycle.LifecycleFragment;
-import android.content.Context;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.codangcoding.popularmovies.stage1.R;
 import com.codangcoding.popularmovies.stage1.detail.DetailActivity;
 import com.codangcoding.popularmovies.stage1.internal.api.Movie;
+import com.codangcoding.popularmovies.stage1.internal.di.Injectable;
 
 import java.util.List;
 
@@ -25,33 +27,43 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import dagger.android.support.AndroidSupportInjection;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by eko on 7/3/17.
  */
 
-public class MainFragment extends LifecycleFragment implements MovieClickListener {
+public class MainFragment extends LifecycleFragment implements Injectable, MovieClickListener {
 
     public static MainFragment newInstance() {
         return new MainFragment();
     }
 
+    public static MainFragment newInstanceWithErrorHandler(Consumer<? super Throwable> errorHandler) {
+        MainFragment mainFragment = new MainFragment();
+        mainFragment.setErrorHandler(errorHandler);
+
+        return mainFragment;
+    }
+
     @Inject
-    MainViewModel viewModel;
+    ViewModelProvider.Factory viewModelFactory;
 
     @BindView(R.id.movieList)
     RecyclerView rvMovie;
 
     private MainAdapter adapter;
+    private MainViewModel viewModel;
 
-    @Override public void onAttach(Context context) {
-        AndroidSupportInjection.inject(this);
-        super.onAttach(context);
-    }
+    private Consumer<? super Throwable> errorHandler;
+    private final Consumer<? super Throwable> DEFAULT_ERROR_HANDLER = (Consumer<Throwable>) throwable -> Toast.makeText(
+            getActivity(),
+            getString(R.string.network_request_error),
+            Toast.LENGTH_SHORT
+    ).show();
 
     @Override public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,21 +71,19 @@ public class MainFragment extends LifecycleFragment implements MovieClickListene
     }
 
     @Nullable @Override public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_main, container, false);
-    }
-
-    @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, rootView);
 
         adapter = new MainAdapter(getActivity(), this);
-        ButterKnife.bind(this, view);
-        rvMovie.setLayoutManager(new GridLayoutManager(getActivity(), 2));
+        rvMovie.setLayoutManager(new GridLayoutManager(getActivity(), getResources().getInteger(R.integer.grid_column)));
         rvMovie.setAdapter(adapter);
+
+        return rootView;
     }
 
     @Override public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
+        viewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
         executeObservable(viewModel.getPopularMovies());
     }
 
@@ -101,13 +111,17 @@ public class MainFragment extends LifecycleFragment implements MovieClickListene
         }
     }
 
+    public void setErrorHandler(Consumer<? super Throwable> errorHandler) {
+        this.errorHandler = errorHandler;
+    }
+
     private void executeObservable(Observable<List<Movie>> observable) {
         observable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         movies -> adapter.setData(movies),
-                        throwable -> Log.e("MainFragment", throwable.getMessage())
+                        null == errorHandler ? DEFAULT_ERROR_HANDLER : errorHandler
                 );
     }
 }

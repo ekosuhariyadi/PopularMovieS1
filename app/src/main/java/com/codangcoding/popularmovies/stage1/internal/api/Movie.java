@@ -11,7 +11,7 @@ import paperparcel.PaperParcel;
  * Created by eko on 7/2/17.
  */
 @PaperParcel
-public final class Movie implements Parcelable{
+public final class Movie implements Parcelable {
 
     public static final Creator<Movie> CREATOR = PaperParcelMovie.CREATOR;
 
@@ -20,10 +20,15 @@ public final class Movie implements Parcelable{
     @JsonProperty("poster_path")
     public String posterPath;
 
+    @JsonProperty("backdrop_path")
+    public String backdropPath;
+
     @JsonProperty("original_title")
     public String originalTitle;
 
     public String overview;
+
+    public String title;
 
     @JsonProperty("vote_average")
     public double userRating;

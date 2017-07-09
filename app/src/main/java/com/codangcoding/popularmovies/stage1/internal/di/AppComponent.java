@@ -1,11 +1,12 @@
 package com.codangcoding.popularmovies.stage1.internal.di;
 
+import android.app.Application;
+
 import com.codangcoding.popularmovies.stage1.MovieApp;
-import com.codangcoding.popularmovies.stage1.detail.DetailActivity;
-import com.codangcoding.popularmovies.stage1.main.MainActivity;
 
 import javax.inject.Singleton;
 
+import dagger.BindsInstance;
 import dagger.Component;
 import dagger.android.AndroidInjectionModule;
 
@@ -15,12 +16,20 @@ import dagger.android.AndroidInjectionModule;
 @Singleton
 @Component(modules = {
         AndroidInjectionModule.class,
-        AppModule.class,
         NetworkModule.class,
-        FragmentsModule.class,
         ActivitiesModule.class
 })
 public interface AppComponent {
+
+    @Component.Builder
+    interface Builder {
+
+        @BindsInstance Builder application(Application application);
+
+        Builder network(NetworkModule networkModule);
+
+        AppComponent build();
+    }
 
     void inject(MovieApp movieApp);
 }

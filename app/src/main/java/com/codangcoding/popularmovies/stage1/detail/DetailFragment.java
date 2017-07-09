@@ -1,9 +1,9 @@
 package com.codangcoding.popularmovies.stage1.detail;
 
 import android.arch.lifecycle.LifecycleFragment;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,13 +17,16 @@ import com.codangcoding.popularmovies.stage1.internal.api.Movie;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import dagger.android.support.AndroidSupportInjection;
 
 /**
  * Created by eko on 7/3/17.
  */
 
 public class DetailFragment extends LifecycleFragment {
+
+    private static final double RATE_PERFECT = 9.0;
+    private static final double RATE_GOOD = 7.0;
+    private static final double RATE_NORMAL = 5.0;
 
     public static DetailFragment newInstance() {
         return new DetailFragment();
@@ -32,11 +35,11 @@ public class DetailFragment extends LifecycleFragment {
     @BindView(R.id.moviePoster)
     ImageView moviePoster;
 
-    @BindView(R.id.movieTitle)
+    @BindView(R.id.movieOriginalTitle)
     TextView movieTitle;
 
-    @BindView(R.id.movieRelease)
-    TextView movieRelease;
+    @BindView(R.id.movieReleaseDate)
+    TextView movieReleaseDate;
 
     @BindView(R.id.movieRating)
     TextView movieRating;
@@ -44,19 +47,11 @@ public class DetailFragment extends LifecycleFragment {
     @BindView(R.id.movieOverview)
     TextView movieOverview;
 
-    @Override public void onAttach(Context context) {
-        AndroidSupportInjection.inject(this);
-        super.onAttach(context);
-    }
-
     @Nullable @Override public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_detail, container, false);
-    }
+        View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        ButterKnife.bind(this, rootView);
 
-    @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        ButterKnife.bind(this, view);
+        return rootView;
     }
 
     @Override public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -64,8 +59,9 @@ public class DetailFragment extends LifecycleFragment {
 
         Movie movie = getActivity().getIntent().getParcelableExtra(DetailActivity.EXTRA_MOVIE);
         movieTitle.setText(movie.originalTitle);
-        movieRelease.setText(movie.releaseDate);
-        movieRating.setText(getString(R.string.movie_details_rating, movie.userRating));
+        movieReleaseDate.setText(getString(R.string.movie_details_release_date, movie.releaseDate));
+        movieRating.setText(getString(R.string.movie_details_rating, movie.userRating, getRatingText(movie.userRating)));
+        movieRating.setTextColor(getRatingColor(movie.userRating));
         movieOverview.setText(movie.overview);
 
         Glide.with(getActivity())
@@ -74,5 +70,29 @@ public class DetailFragment extends LifecycleFragment {
                 .error(R.mipmap.ic_launcher)
                 .crossFade()
                 .into(moviePoster);
+    }
+
+    public int getRatingColor(double rate) {
+        if (rate >= RATE_PERFECT) {
+            return ContextCompat.getColor(getContext(), R.color.rate_perfect);
+        } else if (rate >= RATE_GOOD) {
+            return ContextCompat.getColor(getContext(), R.color.rate_good);
+        } else if (rate >= RATE_NORMAL) {
+            return ContextCompat.getColor(getContext(), R.color.rate_normal);
+        } else {
+            return ContextCompat.getColor(getContext(), R.color.rate_bad);
+        }
+    }
+
+    public String getRatingText(double rate) {
+        if (rate >= RATE_PERFECT) {
+            return getString(R.string.rate_perfect);
+        } else if (rate >= RATE_GOOD) {
+            return getString(R.string.rate_good);
+        } else if (rate >= RATE_NORMAL) {
+            return getString(R.string.rate_normal);
+        } else {
+            return getString(R.string.rate_bad);
+        }
     }
 }

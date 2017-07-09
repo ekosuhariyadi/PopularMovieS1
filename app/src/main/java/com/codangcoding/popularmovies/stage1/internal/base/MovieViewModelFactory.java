@@ -4,41 +4,43 @@ import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProvider;
 
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * Created by eko on 7/3/17.
  */
-
+@Singleton
 public class MovieViewModelFactory implements ViewModelProvider.Factory {
 
-    private final Map<Class<? extends ViewModel>, Provider<? extends ViewModel>> factory;
+    private final Map<Class<? extends ViewModel>, Provider<ViewModel>> creators;
 
     @Inject
-    public MovieViewModelFactory(Map<Class<? extends ViewModel>, Provider<? extends ViewModel>> factory) {
-        this.factory = factory;
+    public MovieViewModelFactory(Map<Class<? extends ViewModel>, Provider<ViewModel>> creators) {
+        this.creators = creators;
     }
 
-    @Override public <T extends ViewModel> T create(Class<T> modelClass) {
-        Provider<? extends ViewModel> provider = factory.get(modelClass);
-
-        if (null == provider) {
-            Set<Map.Entry<Class<? extends ViewModel>, Provider<? extends ViewModel>>> entrySet = factory.entrySet();
-            for (Map.Entry<Class<? extends ViewModel>, Provider<? extends ViewModel>> entry : entrySet) {
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends ViewModel> T create(Class<T> modelClass) {
+        Provider<? extends ViewModel> creator = creators.get(modelClass);
+        if (creator == null) {
+            for (Map.Entry<Class<? extends ViewModel>, Provider<ViewModel>> entry : creators.entrySet()) {
                 if (modelClass.isAssignableFrom(entry.getKey())) {
-                    provider = entry.getValue();
+                    creator = entry.getValue();
                     break;
                 }
             }
         }
-
-        if (null == provider) {
-            throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass);
+        if (creator == null) {
+            throw new IllegalArgumentException("unknown model class " + modelClass);
         }
-
-        return (T) provider.get();
+        try {
+            return (T) creator.get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
